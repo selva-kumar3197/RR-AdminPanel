@@ -1,0 +1,15 @@
+.select_fields{
+    width: 100%;
+}
+
+.select_field{
+    width: 30%;
+    border: 1px solid grey;        
+    border-radius: 1rem;
+    font-size: 1.2rem;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    padding-left: 20px;
+ 
+    height: 3rem; 
+}
+

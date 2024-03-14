@@ -1,0 +1,310 @@
+import React, { useEffect, useState } from "react";
+import FirstNavbar from "../dashboard/FirstNavbar";
+import SideBar from "../dashboard/SideBar";
+import { AiOutlineUnorderedList } from "react-icons/ai";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import baseURL from "../../Services/Url";
+import { Modal, Button, Row, Form, Col, Spinner } from "react-bootstrap";
+import { ToastContainer, toast, Zoom } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { AgGridReact } from "ag-grid-react";
+
+function UserList() {
+  const [ProductList, setPoductList] = useState([]);
+  const [reloadPage, setReloadPage] = useState(1);
+  const [loader, setLoader] = useState(false);
+  const [rowData, setRowdata] = useState();
+
+  const [updateMemberForm, setupdateMemberForm] = useState({
+    heading: "",
+    text: "",
+  });
+
+  const [updateMemberFormErrors, setupdateMemberFormErrors] = useState({
+    heading: "",
+    text: "",
+  });
+
+  useEffect(() => {
+    productsListApi();
+  }, [reloadPage]);
+
+  /** Product List **/
+  const productsListApi = () => {
+    axios({
+      mathod: "GET",
+      url: `${baseURL}/users`,
+    })
+      .then((res) => {
+        if (res.status == 200) {
+          setRowdata(res.data.reverse());
+        }
+      })
+      .catch((err) => {
+        console.log(err, "err");
+      });
+  };
+
+  /* list */
+  const [deleleId, setDeleleteId] = useState({
+    userId: "",
+  });
+  const handleDelete = (ele) => {
+    setShowDelete(true);
+
+    const idData = ele;
+    setDeleleteId({
+      ...deleleId,
+      ["userId"]: idData._id,
+    });
+  };
+  console.log(deleleId);
+
+  const [showDelete, setShowDelete] = useState(false);
+  const handleDeleteClose = () => {
+    setShowDelete(false);
+  };
+
+  const handleDeleteClear = () => {
+    setShowDelete(false);
+  };
+  console.log(deleleId, "lll");
+  const handleDeleteSubmit = () => {
+    setLoader(true);
+    axios
+      .delete(`${baseURL}/users/${deleleId.userId}`, {
+        // headers: {
+        //   Authorization: `Bearer ${token}`
+        // },
+      })
+      .then((res) => {
+        if (res.status == 200) {
+          toast.success("Successfully Deleted");
+          setLoader(false);
+          setReloadPage(reloadPage + 1);
+          setShowDelete(false);
+        }
+      })
+      .catch((err) => {
+        console.log(err, "222");
+        if (err.response.status == 401) {
+          toast.error("Token is Expaired");
+          setLoader(false);
+          setReloadPage(reloadPage + 1);
+          setShowDelete(false);
+        }
+      });
+  };
+
+  const handleClose = () => {
+    setShow(false);
+  };
+
+  /* update */
+
+  const [show, setShow] = useState(false);
+
+  /** handle Change **/
+  const handleChange = (event) => {
+    setupdateMemberForm({
+      ...updateMemberForm,
+      [event.target.name]: event.target.value,
+    });
+    setupdateMemberFormErrors({
+      ...updateMemberFormErrors,
+      [event.target.name]: null,
+    });
+  };
+
+  /** Form Validation **/
+  const handleValidation = () => {
+    // const regEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+    const textReg = /[A-Za-z]/;
+    const newErros = {};
+    const { heading, text } = updateMemberForm;
+    if (!heading) {
+      newErros.heading = "please enter name";
+    } else if (heading && !textReg.test(heading)) {
+      newErros.heading = "numbers is not allowed";
+    } else if (heading && heading.length > 50) {
+      newErros.name = "name should be below 50 charecters";
+    }
+
+    if (!text) {
+      newErros.text = "please enter disignation";
+    } else if (text && !textReg.test(text)) {
+      newErros.text = "numbers is not allowed";
+    } else if (text && text.length > 50) {
+      newErros.text = "disignation should be below 50 charecters";
+    }
+    return newErros;
+  };
+
+  /***** Pagenation Table******/
+  const rowHeight = 50;
+  const DefaultColumnSetting = {
+    sortable: true,
+    filter: true,
+
+    floatingFilter: true,
+    flex: 1,
+    resizable: true,
+    minWidth: 120,
+  };
+
+  const [colDefs, setColDefs] = useState([
+    {
+      headerName: "Id",
+      valueGetter: "node.rowIndex + 1",
+      filter: true,
+      lockPosition: true,
+    },
+    {
+      headerName: "email",
+      filter: true,
+      field: "email",
+    },
+    {
+      headerName: "Delete",
+      filter: false,
+      cellRendererFramework: (params) => (
+        <center onClick={() => handleDelete(params.data)}>
+          <button type="button" class="btn btn-outline-danger">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-trash-fill"
+              viewBox="0 0 16 16"
+            >
+              <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z" />
+            </svg>
+          </button>
+        </center>
+      ),
+    },
+  ]);
+
+  const handleClear = () => {
+    setupdateMemberForm({
+      ...updateMemberForm,
+      heading: "",
+      text: "",
+    });
+  };
+
+  return (
+    <div>
+      <ToastContainer
+        position="top-center"
+        autoClose={1000}
+        hideProgressBar
+        transition={Zoom}
+        delay={500}
+        limit={1}
+      />
+      <Modal show={showDelete} onHide={handleDeleteClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Meamber</Modal.Title>
+        </Modal.Header>
+        <Modal.Footer>
+          <Modal.Body>
+            <div className="d-flex">
+              <div style={{ marginLeft: "50px" }}>
+                <Button variant="secondary" onClick={handleDeleteClear}>
+                  Cancel
+                </Button>
+              </div>
+              <div style={{ marginLeft: "150px" }}>
+                {loader == false && (
+                  <Button variant="danger" onClick={handleDeleteSubmit}>
+                    Delete
+                  </Button>
+                )}
+                {loader == true && (
+                  <Spinner animation="border" variant="Primary" />
+                )}
+              </div>
+            </div>
+          </Modal.Body>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Update Product</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="col-md-12">
+            <Row className="mb-6">
+              <Form.Group as={Col}>
+                <Form.Label> Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Name"
+                  name="heading"
+                  value={updateMemberForm.heading}
+                  onChange={handleChange}
+                  autoComplete="off"
+                />
+                <span className="text-danger">
+                  {updateMemberFormErrors.heading}
+                </span>
+              </Form.Group>
+            </Row>
+            <Form.Group className="mb-3">
+              <Form.Label>Product Text</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                placeholder="Product Text"
+                name="text"
+                value={updateMemberForm.text}
+                onChange={handleChange}
+                autoComplete="off"
+              />
+              <span className="text-danger">{updateMemberFormErrors.text}</span>
+            </Form.Group>
+          </div>
+        </Modal.Body>
+      </Modal>
+      <div>
+        <div class="sidebar">
+          <SideBar />
+        </div>
+
+        <div class="content">
+          <div className="container ">
+            <FirstNavbar />
+
+            <div className="row my-2">
+              <div className="col-md-3">
+                <h3>
+                  <b>All User List </b>
+                </h3>
+              </div>
+            </div>
+            <div
+              className="ag-theme-alpine"
+              style={{ height: "75vh", width: "100%" }}
+            >
+              <AgGridReact
+                rowHeight={rowHeight}
+                // columnDefs={columns}
+                columnDefs={colDefs}
+                defaultColDef={DefaultColumnSetting}
+                pagination={true}
+                paginationPageSize={10}
+                // onGridReady={onGridReady}
+                rowData={rowData}
+              />{" "}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default UserList;
